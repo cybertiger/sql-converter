@@ -1,0 +1,5 @@
+com.mysql.jdbc.Driver
+com.mysql.fabric.jdbc.FabricMySQLDriver
+org.postgresql.Driver
+org.h2.Driver
+org.apache.derby.jdbc.AutoloadedDriver
