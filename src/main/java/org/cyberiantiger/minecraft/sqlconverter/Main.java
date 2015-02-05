@@ -174,7 +174,7 @@ public class Main {
         System.err.println("Usage: java -jar sql-converter.jar [-R <rate>] [-n] [-d] [-o] [-F] [-u <username>] [-p <password>] <database url> <table> <name column> <uuid column>");
         System.err.println("     -R <rate>     - Maximum number of queries per 10 minutes, default 600"); 
         System.err.println("     -n            - dry run, don't do anything.");
-        System.err.println("     -d            - Delete rows for invalid names.");
+        System.err.println("     -d            - Delete rows for names with no valid UUID.");
         System.err.println("     -o            - Use offline UUIDs");
         System.err.println("     -F            - Update existing UUIDs, don't just replace NULL");
         System.err.println("     -e <char>     - Escape for table and column names, default: none");
