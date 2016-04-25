@@ -177,6 +177,7 @@ public class Main {
         System.err.println("     -d            - Delete rows for names with no valid UUID.");
         System.err.println("     -o            - Use offline UUIDs");
         System.err.println("     -F            - Update existing UUIDs, don't just replace NULL");
+        System.err.println("     -V            - Don't skip rows with invalid UUIDS");
         System.err.println("     -e <char>     - Escape for table and column names, default: none");
         System.err.println("     -u <username> - Database username");
         System.err.println("     -p <password> - Database password");
@@ -200,6 +201,7 @@ public class Main {
         boolean parseFlags = true;
         boolean dryRun = false;
         boolean offline = false;
+        boolean skipInvalid = true;
         UUIDFormat format = UUIDFormat.JAVA;
         boolean delete = false;
         boolean force = false;
@@ -216,6 +218,8 @@ public class Main {
                     offline = true;
                 } else if ("-F".equals(arg)) {
                     force = true;
+                } else if ("-V".equals(arg)) {
+                    skipInvalid = false;
                 } else if ("-e".equals(arg)) {
                     i++;
                     if (args.length == i) {
@@ -341,12 +345,16 @@ public class Main {
                 rs = ps2.executeQuery();
                 while (rs.next()) {
                     String name = rs.getString(1);
-                    UUID uuid;
+                    UUID uuid = null;
                     try { 
                         uuid = format.get(rs, 2);
                     } catch (RuntimeException ex) {
-                        System.out.println("Skipping row with name = " + name + " uuid = " + rs.getObject(2) + "; Invalid uuid");
-                        continue;
+                        if (skipInvalid) {
+                            System.out.println("Skipping row with name = " + name + " uuid = " + rs.getObject(2) + "; Invalid uuid");
+                            continue;
+                        } else {
+                            System.out.println("Ignoring invalid uuid: " + rs.getObject(2) + " for name: " + name);
+                        }
                     }
                     if (!VALID_USERNAME.matcher(name).matches()) {
                         System.out.println("Skipping row with name = " + name + " uuid = " + uuid + "; Invalid name");
