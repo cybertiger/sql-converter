@@ -2,11 +2,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.cyberiantiger.minecraft</groupId>
   <artifactId>sql-converter</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.1</version>
   <scm>
     <url>https://github.com/cybertiger/sql-converter/</url>
     <connection>scm:git:git://github.com/cybertiger/sql-converter.git</connection>
     <developerConnection>scm:git:git@github.com:cybertiger/sql-converter.git</developerConnection>
+    <tag>sql-converter-1.1</tag>
   </scm>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
