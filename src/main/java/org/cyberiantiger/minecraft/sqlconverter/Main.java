@@ -15,6 +15,7 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -39,19 +40,23 @@ import java.util.regex.Pattern;
 public class Main {
     private static enum UUIDFormat {
         JAVA {
+            @Override
             public UUID get(ResultSet rs, int column) throws SQLException {
                 String uuidString = rs.getString(column);
                 if (rs.wasNull()) return null;
                 return UUID.fromString(uuidString);
             }
+            @Override
             public void set(PreparedStatement ps, int column, UUID uuid) throws SQLException {
                 ps.setString(column, uuid == null ? null : uuid.toString());
             }
+            @Override
             public void update(ResultSet rs, int column, UUID uuid) throws SQLException {
                 rs.updateString(column, uuid == null ? null : uuid.toString());
             }
         },
         NUMERIC {
+            @Override
             public UUID get(ResultSet rs, int column) throws SQLException {
                 BigInteger uuid = rs.getBigDecimal(column).toBigInteger();
                 if (rs.wasNull()) return null;
@@ -59,6 +64,7 @@ public class Main {
                 long msw = uuid.shiftRight(64).longValue();
                 return new UUID(msw, lsw);
             }
+            @Override
             public void set(PreparedStatement ps, int column, UUID uuid) throws SQLException {
                 if (uuid == null) {
                     ps.setBigDecimal(column, null);
@@ -69,6 +75,7 @@ public class Main {
                     ps.setBigDecimal(column, new BigDecimal(intuuid));
                 }
             }
+            @Override
             public void update(ResultSet rs, int column, UUID uuid) throws SQLException {
                 if (uuid == null) {
                     rs.updateBigDecimal(column, null);
@@ -81,6 +88,7 @@ public class Main {
             }
         },
         HEXADECIMAL {
+            @Override
             public UUID get(ResultSet rs, int column) throws SQLException {
                 String uuidString = rs.getString(column);
                 if (rs.wasNull()) {
@@ -91,6 +99,7 @@ public class Main {
                 long msw = uuidInt.shiftRight(64).longValue();
                 return new UUID(msw, lsw);
             }
+            @Override
             public void set(PreparedStatement ps, int column, UUID uuid) throws SQLException {
                 if (uuid == null) {
                     ps.setString(column, null);
@@ -99,6 +108,7 @@ public class Main {
                     ps.setString(column, uuidString);
                 }
             }
+            @Override
             public void update(ResultSet rs, int column, UUID uuid) throws SQLException {
                 if (uuid == null) {
                     rs.updateString(column, null);
@@ -109,6 +119,7 @@ public class Main {
             }
         },
         MOJANG {
+            @Override
             public UUID get(ResultSet rs, int column) throws SQLException {
                 String uuidString = rs.getString(column);
                 if (rs.wasNull()) {
@@ -119,6 +130,7 @@ public class Main {
                 long msw = uuidInt.shiftRight(64).longValue();
                 return new UUID(msw, lsw);
             }
+            @Override
             public void set(PreparedStatement ps, int column, UUID uuid) throws SQLException {
                 if (uuid == null) {
                     ps.setString(column, null);
@@ -129,6 +141,7 @@ public class Main {
                     ps.setString(column, intuuid.toString(16));
                 }
             }
+            @Override
             public void update(ResultSet rs, int column, UUID uuid) throws SQLException {
                 if (uuid == null) {
                     rs.updateString(column, null);
@@ -137,6 +150,41 @@ public class Main {
                     intuuid = intuuid.shiftLeft(64);
                     intuuid = intuuid.add(BigInteger.valueOf(uuid.getLeastSignificantBits()));
                     rs.updateString(column, intuuid.toString(16));
+                }
+            }
+        },
+        BINARY {
+            @Override
+            public UUID get(ResultSet rs, int column) throws SQLException {
+                byte[] data = rs.getBytes(column);
+                if (rs.wasNull()) {
+                    return null;
+                }
+                ByteBuffer buf = ByteBuffer.wrap(data);
+                return new UUID(buf.getLong(), buf.getLong());
+            }
+
+            @Override
+            public void set(PreparedStatement ps, int column, UUID uuid) throws SQLException {
+                if (uuid == null) {
+                    ps.setBinaryStream(column, null);
+                } else {
+                    ByteBuffer data = ByteBuffer.wrap(new byte[16]);
+                    data.putLong(uuid.getMostSignificantBits());
+                    data.putLong(uuid.getLeastSignificantBits());
+                    ps.setBytes(column, data.array());
+                }
+            }
+
+            @Override
+            public void update(ResultSet rs, int column, UUID uuid) throws SQLException {
+                if (uuid == null) {
+                    rs.updateBytes(column, null);
+                } else {
+                    ByteBuffer data = ByteBuffer.wrap(new byte[16]);
+                    data.putLong(uuid.getMostSignificantBits());
+                    data.putLong(uuid.getLeastSignificantBits());
+                    rs.updateBytes(column, data.array());
                 }
             }
         };
@@ -186,7 +234,7 @@ public class Main {
         System.err.println("                   numeric     - Use BigDecimal");
         System.err.println("                   hexadecimal - Hex format, like java's without -");
         System.err.println("                   mojang      - Hex format, like java's without -, and no leading zeros");
-
+        System.err.println("                   binary      - Binary format");
     }
 
 
